@@ -1,26 +1,10 @@
 import numpy as np
 import cv2
 import mediapipe as mp
+import helper
 
 mp_drawing = mp.solutions.drawing_utils
 mp_pose = mp.solutions.pose
-
-
-def calculate_angle(a, b, c):
-    a = np.array(a)
-    b = np.array(b)
-    c = np.array(c)
-    radians = np.arctan2(c[1] - b[1], c[0] - b[0]) - np.arctan2(
-        a[1] - b[1], a[0] - b[0]
-    )
-    angle = np.abs(radians * 180 / np.pi)
-    if angle > 180:
-        angle = 360 - angle
-    return angle
-
-
-def calculate_position(x, y):
-    return (int(x * 640), int(y * 480))
 
 
 cap = cv2.VideoCapture(0)
@@ -51,33 +35,38 @@ with mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5) as 
 
             # extract landmarks and coordinates
             landmarks = results.pose_landmarks.landmark
-            left_shoulder = (
-                landmarks[mp_pose.PoseLandmark.LEFT_SHOULDER.value].x,
-                landmarks[mp_pose.PoseLandmark.LEFT_SHOULDER.value].y,
-                landmarks[mp_pose.PoseLandmark.LEFT_SHOULDER.value].z,
-            )
-            left_elbow = (
-                landmarks[mp_pose.PoseLandmark.LEFT_ELBOW.value].x,
-                landmarks[mp_pose.PoseLandmark.LEFT_ELBOW.value].y,
-                landmarks[mp_pose.PoseLandmark.LEFT_ELBOW.value].z,
-            )
-            left_wrist = (
-                landmarks[mp_pose.PoseLandmark.LEFT_WRIST.value].x,
-                landmarks[mp_pose.PoseLandmark.LEFT_WRIST.value].y,
-                landmarks[mp_pose.PoseLandmark.LEFT_WRIST.value].z,
-            )
+            left_shoulder = helper.get_joint_position(landmarks, "LEFT_SHOULDER")
+            left_elbow = helper.get_joint_position(landmarks, "LEFT_ELBOW")
+            left_wrist = helper.get_joint_position(landmarks, "LEFT_WRIST")
+            right_shoulder = helper.get_joint_position(landmarks, "RIGHT_SHOULDER")
+            right_elbow = helper.get_joint_position(landmarks, "RIGHT_ELBOW")
+            right_wrist = helper.get_joint_position(landmarks, "RIGHT_WRIST")
 
             # calculate angle and position
             left_elbow_angle = round(
-                calculate_angle(left_shoulder, left_elbow, left_wrist)
+                helper.calculate_angle(left_shoulder, left_elbow, left_wrist)
             )
-            left_elbow_pos = calculate_position(left_elbow[0], left_elbow[1])
+            left_elbow_pos = helper.calculate_position(left_elbow[0], left_elbow[1])
+            right_elbow_angle = round(
+                helper.calculate_angle(right_shoulder, right_elbow, right_wrist)
+            )
+            right_elbow_pos = helper.calculate_position(right_elbow[0], right_elbow[1])
 
             # draw angle text in the image
             cv2.putText(
                 img=image,
                 text=f"{left_elbow_angle} deg",
                 org=left_elbow_pos,
+                fontFace=cv2.FONT_HERSHEY_SIMPLEX,
+                fontScale=1,
+                color=(255, 255, 255),
+                thickness=2,
+                lineType=cv2.LINE_AA,
+            )
+            cv2.putText(
+                img=image,
+                text=f"{right_elbow_angle} deg",
+                org=right_elbow_pos,
                 fontFace=cv2.FONT_HERSHEY_SIMPLEX,
                 fontScale=1,
                 color=(255, 255, 255),
