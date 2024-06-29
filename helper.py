@@ -88,7 +88,40 @@ def draw_angle(image, angle, pos):
     )
 
 
+def draw_reps_counter(image, rep):
+
+    text = f"{rep} reps"
+    org = (10, 50)
+    fontFace = cv2.FONT_HERSHEY_SIMPLEX
+    fontScale = 1
+    color = (255, 255, 255)  # White color for the text
+    thickness = 2
+    lineType = cv2.LINE_AA
+    (text_width, text_height), baseline = cv2.getTextSize(
+        text, fontFace, fontScale, thickness
+    )
+    text_height += baseline
+    cv2.rectangle(
+        image,
+        org,
+        (org[0] + text_width, org[1] - text_height),
+        (0, 0, 0),
+        cv2.FILLED,
+    )
+    cv2.putText(
+        img=image,
+        text=text,
+        org=org,
+        fontFace=fontFace,
+        fontScale=fontScale,
+        color=color,
+        thickness=thickness,
+        lineType=lineType,
+    )
+
+
 def exercise_counter(exercise, angle, count, stage):
+    
     if exercise == "curl":
         if angle >= 170:
             stage = "down"

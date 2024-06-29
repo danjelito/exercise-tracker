@@ -7,6 +7,7 @@ from helper import (
     get_joint_position,
     exercise_counter,
     draw_angle,
+    draw_reps_counter,
 )
 
 mp_drawing = mp.solutions.drawing_utils
@@ -23,7 +24,7 @@ if not cap.isOpened():
 with mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5) as pose:
 
     frame_counter = 0
-    exercise_name = None
+    exercise_name = "curl"
     exercise_count = 0
     exercise_stage = None
 
@@ -50,67 +51,40 @@ with mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5) as 
 
                 # extract landmarks and coordinates
                 landmarks = results.pose_landmarks.landmark
-                left_shoulder = get_joint_position(landmarks, "LEFT_SHOULDER")
-                left_elbow = get_joint_position(landmarks, "LEFT_ELBOW")
-                left_wrist = get_joint_position(landmarks, "LEFT_WRIST")
-                right_shoulder = get_joint_position(landmarks, "RIGHT_SHOULDER")
-                right_elbow = get_joint_position(landmarks, "RIGHT_ELBOW")
-                right_wrist = get_joint_position(landmarks, "RIGHT_WRIST")
+                left_a_point = get_joint_position(landmarks, "LEFT_SHOULDER")
+                left_b_point = get_joint_position(landmarks, "LEFT_ELBOW")
+                left_c_point = get_joint_position(landmarks, "LEFT_WRIST")
+                right_a_point = get_joint_position(landmarks, "RIGHT_SHOULDER")
+                right_b_point = get_joint_position(landmarks, "RIGHT_ELBOW")
+                right_c_point = get_joint_position(landmarks, "RIGHT_WRIST")
 
                 # calculate angle and position
-                left_elbow_angle = round(
-                    calculate_angle(left_shoulder, left_elbow, left_wrist)
+                left_angle = round(
+                    calculate_angle(left_a_point, left_b_point, left_c_point)
                 )
-                left_elbow_pos = calculate_position(left_elbow[0], left_elbow[1])
-                right_elbow_angle = round(
-                    calculate_angle(right_shoulder, right_elbow, right_wrist)
+                left_pos = calculate_position(left_b_point[0], left_b_point[1])
+                right_angle = round(
+                    calculate_angle(right_a_point, right_b_point, right_c_point)
                 )
-                right_elbow_pos = calculate_position(right_elbow[0], right_elbow[1])
+                right_pos = calculate_position(right_b_point[0], right_b_point[1])
 
         else:
             image = frame
 
         # EXERCISE COUNTER
         exercise_count, exercise_stage = exercise_counter(
-            exercise="curl",
-            angle=right_elbow_angle,
+            exercise=exercise_name,
+            angle=((left_angle + right_angle) / 2),  # use both angle
             count=exercise_count,
             stage=exercise_stage,
         )
 
         # draw reps counter
-        text = f"{exercise_count} reps"
-        org = (10, 50)
-        fontFace = cv2.FONT_HERSHEY_SIMPLEX
-        fontScale = 1
-        color = (255, 255, 255)  # White color for the text
-        thickness = 2
-        lineType = cv2.LINE_AA
-        (text_width, text_height), baseline = cv2.getTextSize(
-            text, fontFace, fontScale, thickness
-        )
-        text_height += baseline
-        cv2.rectangle(
-            image,
-            org,
-            (org[0] + text_width, org[1] - text_height),
-            (0, 0, 0),
-            cv2.FILLED,
-        )
-        cv2.putText(
-            img=image,
-            text=text,
-            org=org,
-            fontFace=fontFace,
-            fontScale=fontScale,
-            color=color,
-            thickness=thickness,
-            lineType=lineType,
-        )
+        draw_reps_counter(image, exercise_count)
 
         # draw angle text in the image
-        draw_angle(image, right_elbow_angle, right_elbow_pos)
-        draw_angle(image, left_elbow_angle, left_elbow_pos)
+        draw_angle(image, right_angle, right_pos)
+        draw_angle(image, left_angle, left_pos)
 
         # render landmark
         mp_drawing.draw_landmarks(
