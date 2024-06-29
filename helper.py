@@ -65,3 +65,13 @@ def get_joint_position(landmarks, joint):
         )
     else:
         raise ValueError(f"Invalid joint name: {joint}")
+
+
+def curl_counter(angle, count, stage):
+    if angle >= 170:
+        stage = "down"
+        count = count
+    elif angle <= 20 and stage == "down":
+        stage = "up"
+        count += 1
+    return count, stage
