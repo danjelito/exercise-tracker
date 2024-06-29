@@ -1,5 +1,6 @@
 import numpy as np
 import mediapipe as mp
+import cv2
 
 mp_pose = mp.solutions.pose
 
@@ -67,11 +68,32 @@ def get_joint_position(landmarks, joint):
         raise ValueError(f"Invalid joint name: {joint}")
 
 
-def curl_counter(angle, count, stage):
-    if angle >= 170:
-        stage = "down"
-        count = count
-    elif angle <= 20 and stage == "down":
-        stage = "up"
-        count += 1
-    return count, stage
+def draw_angle(image, angle, pos):
+
+    fontFace = cv2.FONT_HERSHEY_SIMPLEX
+    fontScale = 1
+    color = (255, 255, 255)  # White color for the text
+    thickness = 2
+    lineType = cv2.LINE_AA
+
+    cv2.putText(
+        img=image,
+        text=f"{angle} deg",
+        org=pos,
+        fontFace=fontFace,
+        fontScale=fontScale,
+        color=color,
+        thickness=thickness,
+        lineType=lineType,
+    )
+
+
+def exercise_counter(exercise, angle, count, stage):
+    if exercise == "curl":
+        if angle >= 170:
+            stage = "down"
+            count = count
+        elif angle <= 20 and stage == "down":
+            stage = "up"
+            count += 1
+        return count, stage

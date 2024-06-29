@@ -1,7 +1,13 @@
 import numpy as np
 import cv2
 import mediapipe as mp
-from helper import calculate_angle, calculate_position, get_joint_position, curl_counter
+from helper import (
+    calculate_angle,
+    calculate_position,
+    get_joint_position,
+    exercise_counter,
+    draw_angle,
+)
 
 mp_drawing = mp.solutions.drawing_utils
 mp_pose = mp.solutions.pose
@@ -17,6 +23,7 @@ if not cap.isOpened():
 with mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5) as pose:
 
     frame_counter = 0
+    exercise_name = None
     exercise_count = 0
     exercise_stage = None
 
@@ -59,46 +66,51 @@ with mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5) as 
                     calculate_angle(right_shoulder, right_elbow, right_wrist)
                 )
                 right_elbow_pos = calculate_position(right_elbow[0], right_elbow[1])
+
         else:
             image = frame
 
         # EXERCISE COUNTER
-        if frame_counter >= 2:
-            exercise_count, exercise_stage = curl_counter(
-                right_elbow_angle, exercise_count, exercise_stage
-            )
-            cv2.putText(
-                img=image,
-                text=f"{exercise_count} reps",
-                org=(10, 50),
-                fontFace=cv2.FONT_HERSHEY_SIMPLEX,
-                fontScale=1,
-                color=(255, 255, 255),
-                thickness=2,
-                lineType=cv2.LINE_AA,
-            )
+        exercise_count, exercise_stage = exercise_counter(
+            exercise="curl",
+            angle=right_elbow_angle,
+            count=exercise_count,
+            stage=exercise_stage,
+        )
+
+        # draw reps counter
+        text = f"{exercise_count} reps"
+        org = (10, 50)
+        fontFace = cv2.FONT_HERSHEY_SIMPLEX
+        fontScale = 1
+        color = (255, 255, 255)  # White color for the text
+        thickness = 2
+        lineType = cv2.LINE_AA
+        (text_width, text_height), baseline = cv2.getTextSize(
+            text, fontFace, fontScale, thickness
+        )
+        text_height += baseline
+        cv2.rectangle(
+            image,
+            org,
+            (org[0] + text_width, org[1] - text_height),
+            (0, 0, 0),
+            cv2.FILLED,
+        )
+        cv2.putText(
+            img=image,
+            text=text,
+            org=org,
+            fontFace=fontFace,
+            fontScale=fontScale,
+            color=color,
+            thickness=thickness,
+            lineType=lineType,
+        )
 
         # draw angle text in the image
-        cv2.putText(
-            img=image,
-            text=f"{right_elbow_angle} deg",
-            org=right_elbow_pos,
-            fontFace=cv2.FONT_HERSHEY_SIMPLEX,
-            fontScale=1,
-            color=(255, 255, 255),
-            thickness=2,
-            lineType=cv2.LINE_AA,
-        )
-        cv2.putText(
-            img=image,
-            text=f"{left_elbow_angle} deg",
-            org=left_elbow_pos,
-            fontFace=cv2.FONT_HERSHEY_SIMPLEX,
-            fontScale=1,
-            color=(255, 255, 255),
-            thickness=2,
-            lineType=cv2.LINE_AA,
-        )
+        draw_angle(image, right_elbow_angle, right_elbow_pos)
+        draw_angle(image, left_elbow_angle, left_elbow_pos)
 
         # render landmark
         mp_drawing.draw_landmarks(
