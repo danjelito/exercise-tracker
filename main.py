@@ -1,4 +1,3 @@
-import numpy as np
 import cv2
 import mediapipe as mp
 from helper import (
@@ -94,6 +93,8 @@ with mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5) as 
         )
 
         # display the resulting frame
+        cv2.namedWindow("press q to quit", cv2.WINDOW_NORMAL) 
+        cv2.resizeWindow("press q to quit", 1200, 800) 
         cv2.imshow("press q to quit", image)
 
         # break if q is pressed
